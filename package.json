@@ -1,0 +1,20 @@
+{
+  "name": "flyo-preflight",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ticket in, boarding pass out: travel-readiness layer on top of the Flyo Web Check-in API (with a contract-faithful mock).",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/dev.mjs",
+    "mock": "node src/mock-flyo/server.mjs",
+    "app": "node src/app/server.mjs",
+    "samples": "node scripts/write-samples.mjs",
+    "reset": "node scripts/reset.mjs"
+  },
+  "dependencies": {
+    "unpdf": "1.9.0"
+  }
+}
