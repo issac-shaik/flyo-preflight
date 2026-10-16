@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preflight: travel readiness on Flyo Web Check-in</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>✈</text></svg>">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#detail">Skip to booking details</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">✈</span>
+      <div>
+        <h1>Preflight</h1>
+        <p>Ticket in, boarding pass out. A travel-readiness agent on top of the Flyo Web Check-in API.</p>
+      </div>
+    </div>
+    <ul class="chips" id="modeChips" aria-label="Environment"></ul>
+  </header>
+
+  <main class="layout">
+    <!-- Inbox -->
+    <section class="col inbox" aria-labelledby="inboxTitle">
+      <form class="card ingest" id="ingestForm">
+        <h2 id="inboxTitle">New booking</h2>
+        <label class="drop" id="dropZone">
+          <input type="file" id="ticketFile" accept="application/pdf,image/png,image/jpeg,image/webp,text/plain">
+          <span class="drop-icon" aria-hidden="true">📄</span>
+          <span id="dropLabel"><strong>Drop an e-ticket PDF</strong> or click to choose</span>
+        </label>
+        <details class="paste">
+          <summary>…or paste the ticket email</summary>
+          <label class="sr-only" for="ticketText">Ticket text</label>
+          <textarea id="ticketText" rows="5" placeholder="Paste the airline / OTA confirmation email here"></textarea>
+        </details>
+        <div class="row2">
+          <label>Traveller name<input id="contactName" autocomplete="off" placeholder="Optional"></label>
+          <label>WhatsApp number<input id="contactPhone" autocomplete="off" inputmode="tel" placeholder="+91 …"></label>
+        </div>
+        <button class="btn primary" type="submit" id="ingestBtn">Read ticket &amp; start</button>
+        <p class="form-error" id="ingestError" role="alert"></p>
+        <div class="samples">
+          <h3>Demo tickets</h3>
+          <ul id="sampleList"></ul>
+        </div>
+      </form>
+
+      <div class="card list-card">
+        <h2>Bookings</h2>
+        <ul class="booking-list" id="bookingList" aria-label="Bookings"></ul>
+      </div>
+    </section>
+
+    <!-- Detail -->
+    <section class="col detail" id="detail" tabindex="-1" aria-live="polite" aria-busy="false">
+      <div class="empty" id="emptyState">
+        <h2>No booking selected</h2>
+        <p>Load a demo ticket on the left. Preflight reads it, registers it with Flyo, checks the traveller's documents against entry, transit and Flyo rules, and chases anything missing over WhatsApp.</p>
+        <ol class="howto">
+          <li><strong>Ticket in:</strong> PDF, photo or email text, read by a vision LLM or the built-in parser.</li>
+          <li><strong>Flyo subscribe</strong> right away, so missing info shows up as <code>MISSING_INFO</code>, not a rejection.</li>
+          <li><strong>Readiness:</strong> passport validity, visas, transit visas, name match, MRZ check digits, timing.</li>
+          <li><strong>Chase</strong> the traveller on WhatsApp, then send a <em>full</em> passenger <code>update</code> once they're ready to fly.</li>
+          <li><strong>Boarding pass out:</strong> webhook / status, delivered to WhatsApp.</li>
+        </ol>
+      </div>
+      <div id="detailBody" hidden></div>
+    </section>
+
+    <!-- Phone -->
+    <section class="col phone-col" aria-labelledby="phoneTitle">
+      <div class="phone" id="phone">
+        <div class="phone-head">
+          <span class="avatar" aria-hidden="true" id="phoneAvatar">?</span>
+          <div>
+            <h2 id="phoneTitle">Traveller's WhatsApp</h2>
+            <p id="phoneSub">Select a booking</p>
+          </div>
+        </div>
+        <ol class="chat" id="chat" aria-live="polite" aria-label="Conversation"></ol>
+        <div class="tray" id="docTray" aria-label="Sample documents the traveller can send"></div>
+        <form class="composer" id="composer">
+          <label class="attach" title="Attach a photo or PDF">
+            <span aria-hidden="true">📎</span><span class="sr-only">Attach a file</span>
+            <input type="file" id="chatFile" accept="image/*,application/pdf">
+          </label>
+          <label class="sr-only" for="chatText">Message</label>
+          <input id="chatText" autocomplete="off" placeholder="Reply as the traveller…" disabled>
+          <button class="send" type="submit" id="chatSend" disabled aria-label="Send">➤</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="editDialog" aria-labelledby="editTitle">
+    <form method="dialog" id="editForm">
+      <h2 id="editTitle">Edit passenger</h2>
+      <fieldset>
+        <legend>Ticket</legend>
+        <div class="row2">
+          <label>First name<input name="first_name" required></label>
+          <label>Last name<input name="last_name" required></label>
+        </div>
+        <div class="row2">
+          <label>Email<input name="email" type="email"></label>
+          <label>Phone<input name="phone" inputmode="tel"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Passport</legend>
+        <div class="row2">
+          <label>Number<input name="pp_number"></label>
+          <label>Nationality (ISO-2)<input name="pp_nationality" maxlength="2"></label>
+        </div>
+        <div class="row2">
+          <label>Date of issue<input name="pp_date_of_issue" type="date"></label>
+          <label>Expiry date<input name="pp_expiry_date" type="date"></label>
+        </div>
+        <div class="row2">
+          <label>Place of issue<input name="pp_place_of_issue"></label>
+          <label>Surname on passport<input name="pp_surname"></label>
+        </div>
+        <label>Given names on passport<input name="pp_given_names"></label>
+      </fieldset>
+      <div class="dialog-actions">
+        <button class="btn" value="cancel" formnovalidate>Cancel</button>
+        <button class="btn primary" value="save" id="editSave">Save &amp; re-check</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
